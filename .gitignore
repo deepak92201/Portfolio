@@ -1,0 +1,28 @@
+# =====================
+# GLOBAL
+# =====================
+.env
+.env.local
+
+# =====================
+# ASP.NET Core
+# =====================
+bin/
+obj/
+.vs/
+*.user
+*.suo
+appsettings.Development.json
+
+# =====================
+# React / Node
+# =====================
+node_modules/
+dist/
+build/
+
+# =====================
+# OS / IDE
+# =====================
+.DS_Store
+Thumbs.db
