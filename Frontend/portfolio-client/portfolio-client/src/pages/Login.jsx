@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { login } from '../services/authService';
+import { login } from '../services/authservice';
 import { useNavigate } from 'react-router-dom';
 
 function Login() {
