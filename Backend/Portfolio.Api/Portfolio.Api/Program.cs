@@ -7,6 +7,17 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ✅ Bind to Render PORT (important)
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+else
+{
+    builder.WebHost.UseUrls("http://0.0.0.0:8080");
+}
+
 // --------------------
 // Services
 // --------------------
@@ -15,14 +26,17 @@ builder.Services.AddControllers();
 
 // Database (EF Core + SQL Server)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    )
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
 // 🔐 JWT AUTH CONFIGURATION
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+var jwtKey = jwtSettings["Key"];
+
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new Exception("JWT Key is missing. Set Jwt__Key in environment variables.");
+
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -35,11 +49,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings["Issuer"],
             ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(key)
+            IssuerSigningKey = signingKey
         };
     });
 
-// 🌐 CORS (for React frontend)
+// 🌐 CORS (simple for now — works fast)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
@@ -92,16 +106,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Keeping it is fine (you may see warnings on Render)
 app.UseHttpsRedirection();
 
 app.UseCors("AllowReact");
 
-app.MapGet("/healthz", () => Results.Ok("ok"));
-
-// 🔑 AUTH PIPELINE (ORDER MATTERS)
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// ✅ Simple test endpoints
+app.MapGet("/", () => Results.Ok("API is running"));
+app.MapGet("/healthz", () => Results.Ok("ok"));
 
 app.Run();
