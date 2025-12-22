@@ -96,6 +96,8 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowReact");
 
+app.MapGet("/healthz", () => Results.Ok("ok"));
+
 // 🔑 AUTH PIPELINE (ORDER MATTERS)
 app.UseAuthentication();
 app.UseAuthorization();
