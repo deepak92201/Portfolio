@@ -26,3 +26,10 @@ build/
 # =====================
 .DS_Store
 Thumbs.db
+
+# Local secrets
+appsettings.json
+appsettings.Development.json
+
+Backend/Portfolio.Api/Portfolio.Api/appsettings.json
+Backend/Portfolio.Api/Portfolio.Api/appsettings.Development.json

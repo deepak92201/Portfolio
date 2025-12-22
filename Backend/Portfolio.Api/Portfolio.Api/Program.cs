@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Portfolio.Api.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Portfolio.Api.Data;
+using Portfolio.Api.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +27,7 @@ builder.Services.AddControllers();
 
 // Database (EF Core + SQL Server)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
 // 🔐 JWT AUTH CONFIGURATION
@@ -95,6 +96,28 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+
+    if (!db.AdminUsers.Any())
+    {
+        var username = builder.Configuration["Admin:Username"] ?? "admin";
+        var password = builder.Configuration["Admin:Password"] ?? "admin123";
+
+        db.AdminUsers.Add(new AdminUser
+        {
+            Username = username,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        db.SaveChanges();
+    }
+}
+
 
 // --------------------
 // Middleware pipeline
