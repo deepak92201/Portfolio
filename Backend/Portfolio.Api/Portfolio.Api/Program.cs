@@ -141,6 +141,6 @@ app.MapControllers();
 
 // ✅ Simple test endpoints
 app.MapGet("/", () => Results.Ok("API is running"));
-app.MapGet("/healthz", () => Results.Ok("ok"));
+app.MapMethods("/healthz", new[] { "GET", "HEAD" }, () => Results.Ok("ok"));
 
 app.Run();
